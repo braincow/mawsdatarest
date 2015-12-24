@@ -12,9 +12,11 @@ from lib.cherry.https import ForceHTTPSTool
 cherrypy.tools.forcehttps = ForceHTTPSTool()
 
 # approot object should be the root page of our application
-class Fubar():
-    pass
-approot = Fubar
+class mawsdata(object):
+    @cherrypy.expose
+    def index(self):
+        pass
+approot = mawsdata
 
 # use configs here as application config for this cherrypy application
 configdir = os.path.join(os.environ.get("OPENSHIFT_REPO_DIR"), 'config')
