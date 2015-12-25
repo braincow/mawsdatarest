@@ -31,6 +31,6 @@ class MAWSAPIRoot(object):
     @cherrypy.tools.json_out()
     def GET(self):
         #@TODO: get requested data from database and return JSON from it
-        return dict(rest_header_json)
+        return dict(rest_header_json())
 
 # eof
