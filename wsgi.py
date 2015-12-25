@@ -12,11 +12,23 @@ from lib.cherry.https import ForceHTTPSTool
 cherrypy.tools.forcehttps = ForceHTTPSTool()
 
 # approot object should be the root page of our application
-class mawsdata(object):
+from v1rest import MAWSAPIRoot
+class v1APIRoot(object):
+    exposed = True
+    maws = MAWSAPIRoot()
+
+class APIRoot(object):
+    exposed = True
+    v1 = v1APIRoot()
+
+class MAWSdataWebRoot(object):
+    api = APIRoot()
+
     @cherrypy.expose
     def index(self):
-        pass
-approot = mawsdata
+        return None
+
+approot = MAWSdataWebRoot
 
 # use configs here as application config for this cherrypy application
 configdir = os.path.join(os.environ.get("OPENSHIFT_REPO_DIR"), 'config')
