@@ -10,6 +10,6 @@ def jsonify_error(status, message, traceback, version):
 		'http_error': {'status': status, 'message': message}
 	}
 	cherrypy.response.headers["Content-Type"] = "application/json"
-	return json.dumps(dict(rest_header_json().items() + error.items()))
+	return json.dumps(dict(rest_header_json(), **error))
 
 # eof

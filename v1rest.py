@@ -26,11 +26,11 @@ class MAWSAPIRoot(object):
             # define to success result how many items were added to database
             'success': dict()
         }
-        return dict(rest_header_json.items() + result.items())
+        return dict(rest_header_json(), **result)
 
     @cherrypy.tools.json_out()
     def GET(self):
         #@TODO: get requested data from database and return JSON from it
-        return dict(rest_header_json.items())
+        return dict(rest_header_json)
 
 # eof
