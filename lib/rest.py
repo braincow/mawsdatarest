@@ -1,4 +1,5 @@
 import cherrypy
+import json
 
 def rest_header_json(version=1):
     header = {
@@ -14,7 +15,7 @@ def parse_incoming_json():
     try:
         cl = cherrypy.request.headers['Content-Length']
         rawbody = cherrypy.request.body.read(int(cl))
-        json_body = json.loads(rawbody)
+        json_body = json.loads(rawbody.decode("utf-8"))
     except ValueError as e:
         raise cherrypy.HTTPError(400, "Unable to parse HTTP POSTed JSON from request body")
     return json_body
@@ -25,13 +26,13 @@ def verify_incoming_json(json_body, accepted_version, accepted_query_type, accep
         raise cherrypy.HTTPError(400, "API query header malformed")
     if json_body["api_version"] is not accepted_version:
         raise cherrypy.HTTPError(400, "API version specified not available for this endpoint")
-    if json_body["api_version"] is not cherrypy.config.get("app.name"):
+    if json_body["api_id"] != cherrypy.config.get("app.name"):
         raise cherrypy.HTTPError(400, "API id specified not available for this endpoint")
 
     # all headers should specify what payload type they are sending and it should be present
     if 'query_type' not in json_body.keys():
         raise cherrypy.HTTPError(400, "API query type not specified")
-    if accepted_query_type is not json_body["query_type"]:
+    if accepted_query_type != json_body["query_type"]:
         raise cherrypy.HTTPError(400, "API query type '%s' not accepted for this endpoint" % json_body["query_type"])
     if json_body["query_type"] not in json_body.keys() or json_body["query_type"] is None:
         raise cherrypy.HTTPError(400, "API query payload for type '%s' not present or it is empty" % json_body["query_type"])

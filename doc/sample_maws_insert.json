@@ -1,0 +1,19 @@
+{
+    "api_id": "mawsdata",
+    "api_version": 1,
+    "query_type": "maws_insert",
+    "maws_insert": [
+        {
+            "timestamp": "2015-01-01T00:00:13EET",
+            "TA60sAvg": 1.1,
+            "DP60sAvg": 2.2,
+            "RH60sAvg": 3.3,
+            "PA60sAvg": 4.4,
+            "QFF60sAvg": 5.5,
+            "SR60sSum": 6.6,
+            "PR60sSum": 7.7,
+            "WD2minAvg": 8.8,
+            "WS2minAvg": 9.9
+        }
+    ]
+}
