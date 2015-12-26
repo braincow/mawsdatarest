@@ -23,8 +23,6 @@ def cli(ctx, mysql_host, mysql_port, mysql_user, mysql_pass, mysql_db, rest_url,
     else:
         logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(module)s] [%(levelname)s] %(message)s')
         logging.getLogger("requests").setLevel(logging.WARNING)
-        import requests.packages.urllib3
-        requests.packages.urllib3.disable_warnings()
 
     if not mysql_pass:
         mysql_pass = click.prompt("Password for MySQL connection", hide_input=True)
@@ -41,6 +39,7 @@ def cli(ctx, mysql_host, mysql_port, mysql_user, mysql_pass, mysql_db, rest_url,
     ctx.obj['rest_url'] = rest_url
 
 def _send_rest_query(url, datapoints):
+    logging.info("Uploading 'maws_insert' REST JSON")
     rest_query = {
         "api_id": "mawsdata",
         "api_version": 1,
@@ -48,8 +47,9 @@ def _send_rest_query(url, datapoints):
         "maws_insert": datapoints
     }
     logging.debug(json.dumps(rest_query, sort_keys=True, indent=4, separators=(',', ': ')))
-    r = requests.put(url, data=json.dumps(rest_query), verify=False)
-    logging.info(r.json()["maws_insert"])
+    r = requests.put(url, data=json.dumps(rest_query))
+    result = r.json()["maws_insert"]
+    logging.info("Added: %i, Failed: %i" % (result["success"], result["failed"]))
 
 @cli.command(short_help='Migrate MAWS data')
 @click.option('--mysql_table', required=True, help="MySQL source table name")
@@ -61,15 +61,27 @@ def _send_rest_query(url, datapoints):
 def migrate(ctx, site_name, mysql_table, table_offset, table_amount, rest_amount):
     logging.info("Starting migration")
     with ctx.obj["mysql_connection"].cursor() as cursor:
+        logging.info("Counting total rows waiting for migration in db")
+        # peek into db and count rows avaiting migration in the db (total)
+        cursor.execute("SELECT COUNT(id) AS total FROM %s" % mysql_table)
+        total = cursor.fetchone()["total"]
+
         # construct limiters for SQL query if specified
         if table_amount != 0 or table_offset != 0:
             limit="LIMIT %i,%i" % (table_offset, table_amount)
+            if table_offset + table_amount < total:
+                # use this instead of absolute total
+                logging.warning("Using %i as total since query set is LIMITed. Total in db is %i" % (table_offset + table_amount, total))
+                total = table_offset + table_amount
         else:
+            logging.info("Total amount of rows to process is %i" % total)
             limit=""
 
+        total_done = 0
         rest_current_limit = 0
         rest_rows = []
         # execute query to database
+        logging.info("Querying dataset from database. This can take a long time")
         cursor.execute("SELECT * FROM %s %s" % (mysql_table, limit))
         for row in cursor:
             #logging.debug(row)
@@ -87,7 +99,8 @@ def migrate(ctx, site_name, mysql_table, table_offset, table_amount, rest_amount
                 "WS2minAvg": row["data9"]
             })
             rest_current_limit = rest_current_limit + 1
-            logging.debug("%i/%i" % (rest_current_limit, rest_amount))
+            total_done = total_done + 1
+            logging.info("t: %i/%i c: %i/%i" % (total_done, total, rest_current_limit, rest_amount))
             if rest_current_limit == rest_amount:
                 # send package, reset counter
                 _send_rest_query(ctx.obj['rest_url'], rest_rows)
