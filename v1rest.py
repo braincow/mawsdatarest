@@ -22,16 +22,15 @@ class MAWSAPIRoot(object):
         failed = 0
         success = 0
         for row in query_payload:
-            try:
-                # timestamp needs to be a Python datetime object
-                row["timestamp"] = dateutil.parser.parse(row["timestamp"]).astimezone(pytz.utc)
-                # if the incoming json is in correct format just simply expanding the dictionary keys and values should fill out all necessary variables
-                #@TODO: sanitize so that expanded key=value pairs are _only_ those expected
-                dbobj = MAWSData(**row).save()
-                success = success + 1
-            except Exception as e:
-                cherrypy.log(e)
-                failed = failed + 1
+#            try:
+            # timestamp needs to be a Python datetime object
+            row["timestamp"] = dateutil.parser.parse(row["timestamp"]).astimezone(pytz.utc)
+            # if the incoming json is in correct format just simply expanding the dictionary keys and values should fill out all necessary variables
+            #@TODO: sanitize so that expanded key=value pairs are _only_ those expected
+            dbobj = MAWSData(**row).save()
+            success = success + 1
+#            except Exception as e:
+#                failed = failed + 1
 
         # construct ack message and return it back to client
         result = {
