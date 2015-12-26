@@ -1,6 +1,10 @@
 import cherrypy
 import dateutil.parser
 import pytz
+import io
+
+from mongoengine import Q
+import matplotlib.pyplot as plt
 
 from lib.rest import rest_header_json, parse_incoming_json, verify_incoming_json
 from lib.db.documents import MAWSData
@@ -40,4 +44,28 @@ class MAWSAPIRoot(object):
         }
         return dict(rest_header_json(), **result)
 
+class PLOTAPIRoot(object):
+    exposed = True
+
+    def GET(self, object, startdate, enddate):
+        plt.figure()
+        x_series = []
+        y_series = []
+        for datapoint in MAWSData.objects(Q(timestamp__gte=dateutil.parser.parse(startdate)) & Q(timestamp__lte=dateutil.parser.parse(enddate))):
+            x_series.append(datapoint["timestamp"].timestamp())
+            y_series.append(datapoint[object])
+        # plot the graf
+        plt.plot(x_series, y_series, label=object)
+        plt.legend(loc="upper left")
+        plt.xlabel("Date")
+        plt.ylabel("Value")
+        plt.title("Plotted graph")
+        # do some in-memory I/O trickery to get the image out
+        buf = io.BytesIO()
+        plt.gcf().savefig(buf, format='png')
+        buf.seek(0)
+
+        # finally send correct header and pump the bitstream out
+        cherrypy.response.headers["Content-Type"] = "image/png"
+        return buf.read()
 # eof

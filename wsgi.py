@@ -12,10 +12,11 @@ from lib.cherry.https import ForceHTTPSTool
 cherrypy.tools.forcehttps = ForceHTTPSTool()
 
 # approot object should be the root page of our application
-from v1rest import MAWSAPIRoot
+from v1rest import MAWSAPIRoot, PLOTAPIRoot
 class v1APIRoot(object):
     exposed = True
     maws = MAWSAPIRoot()
+    plot = PLOTAPIRoot()
 
 class APIRoot(object):
     exposed = True
