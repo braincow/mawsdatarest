@@ -23,6 +23,8 @@ def cli(ctx, mysql_host, mysql_port, mysql_user, mysql_pass, mysql_db, rest_url,
     else:
         logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(module)s] [%(levelname)s] %(message)s')
         logging.getLogger("requests").setLevel(logging.WARNING)
+        import requests.packages.urllib3
+        requests.packages.urllib3.disable_warnings()
 
     if not mysql_pass:
         mysql_pass = click.prompt("Password for MySQL connection", hide_input=True)
