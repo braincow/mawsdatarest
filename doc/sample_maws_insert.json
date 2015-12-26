@@ -4,7 +4,7 @@
     "query_type": "maws_insert",
     "maws_insert": [
         {
-            "site": "hmlkirjasto",
+            "site": "exampleLocation1",
             "timestamp": "2015-01-01T00:00:13+02:00",
             "TA60sAvg": 1.1,
             "DP60sAvg": 2.2,
