@@ -47,7 +47,7 @@ def _send_rest_query(url, datapoints):
         "maws_insert": datapoints
     }
     logging.debug(json.dumps(rest_query, sort_keys=True, indent=4, separators=(',', ': ')))
-    r = requests.put(url, data=json.dumps(rest_query))
+    r = requests.put(url, data=json.dumps(rest_query), verify=False)
     result = r.json()["maws_insert"]
     logging.info("Added: %i, Failed: %i" % (result["success"], result["failed"]))
 
