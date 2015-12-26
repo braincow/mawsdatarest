@@ -30,6 +30,7 @@ class MAWSAPIRoot(object):
                 dbobj = MAWSData(**row).save()
                 success = success + 1
             except Exception as e:
+                cherrypy.log(e)
                 failed = failed + 1
 
         # construct ack message and return it back to client
