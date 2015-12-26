@@ -2,6 +2,7 @@ from mongoengine import *
 
 class MAWSData(Document):
     # define document fields to store into database
+    site = StringField(required=True)
     timestamp = DateTimeField(required=True, unique=True)
     # actual data points are defined here
     TA60sAvg = FloatField(required=True) # data1 C
@@ -16,6 +17,7 @@ class MAWSData(Document):
     # define document metadata
     meta = {
         'indexes': [
+            'site',
             'timestamp'
         ]
     }
