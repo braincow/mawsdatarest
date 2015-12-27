@@ -9,4 +9,4 @@ For local development environment:
 * Execute wsgi.py as normal script through Python3 interpreter (CherryPy native HTTP server is used)
 
 ## Other execution environments
-Simply hard code wanted values to configuration files directly and you either execute this app as WSGI application or run as standalone application by executing wsgi.py through Python3 interpreter (CherryPy native HTTP server is used).
+Simply hard code wanted values to configuration files directly and either execute this app as WSGI application or run as standalone application by executing wsgi.py through Python3 interpreter (CherryPy native HTTP server is used).
