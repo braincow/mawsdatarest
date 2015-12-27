@@ -23,6 +23,8 @@ def cli(ctx, mysql_host, mysql_port, mysql_user, mysql_pass, mysql_db, rest_url,
     else:
         logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(module)s] [%(levelname)s] %(message)s')
         logging.getLogger("requests").setLevel(logging.WARNING)
+        import requests.packages.urllib3
+        requests.packages.urllib3.disable_warnings()
 
     if not mysql_pass:
         mysql_pass = click.prompt("Password for MySQL connection", hide_input=True)
@@ -100,7 +102,7 @@ def migrate(ctx, site_name, mysql_table, table_offset, table_amount, rest_amount
             })
             rest_current_limit = rest_current_limit + 1
             total_done = total_done + 1
-            logging.info("t: %i/%i c: %i/%i" % (total_done, total, rest_current_limit, rest_amount))
+            logging.debug("t: %i/%i c: %i/%i" % (total_done, total, rest_current_limit, rest_amount))
             if rest_current_limit == rest_amount:
                 # send package, reset counter
                 _send_rest_query(ctx.obj['rest_url'], rest_rows)
