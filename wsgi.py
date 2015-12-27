@@ -30,7 +30,7 @@ class MAWSdataWebRoot(object):
 approot = MAWSdataWebRoot
 
 # use configs here as application config for this cherrypy application
-configdir = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), 'config')
+configdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config')
 
 if __name__ != "__main__":
 	import atexit
