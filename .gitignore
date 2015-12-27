@@ -53,3 +53,4 @@ docs/_build/
 
 # do not push the local.sh that contains (most likely) some passwords etc
 local.sh
+local_data/

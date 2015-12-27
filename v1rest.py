@@ -2,11 +2,9 @@ import cherrypy
 import dateutil.parser
 import pytz
 import io
-
+import matplotlib.pyplot as plt
 from mongoengine import Q
 from mongoengine.errors import ValidationError, NotUniqueError
-
-import matplotlib.pyplot as plt
 
 from lib.rest import rest_response_json, verify_incoming_json
 from lib.db.documents import MAWSData
@@ -14,8 +12,9 @@ from lib.db.documents import MAWSData
 class MAWSAPIRoot(object):
     exposed = True
 
-    @cherrypy.tools.json_out()
+    @cherrypy.tools.auth_digest(realm='MAWSAPIRoot.PUT')
     @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
     def PUT(self):
         # fetch json body, check JSON headers and
         #  throw exceptions that we do not catch if there is a problem
