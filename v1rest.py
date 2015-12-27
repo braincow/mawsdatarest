@@ -73,6 +73,14 @@ class PLOTAPIRoot(object):
         except ValueError as e:
             raise cherrypy.HTTPError(400, "End and/or start date defined incorrectly. Recommended format is: '0000-00-00T00:00:00.00+00:00' or any other ISO compatible presentation.")
 
+        # check basic error with dates being backwards
+        if startdate > enddate:
+            raise cherrypy.HTTPError(400, "Start date cannot be after end date.")
+
+        # if user is trying to plot too much we crash (quite nastily actually, causing DoS. must be issue with wsgi + matplotlib)
+        if (enddate - startdate).days > cherrypy.config.get("plot.max.days"):
+            raise cherrypy.HTTPError(400, "Trying to plot too large dataset. Maximum amount of days is %i" % cherrypy.config.get("plot.max.days"))
+
         # start gathering data to plot
         objects = MAWSData.objects(
             Q(timestamp__gte = startdate) &
