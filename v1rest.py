@@ -47,18 +47,38 @@ class MAWSAPIRoot(object):
 class PLOTAPIRoot(object):
     exposed = True
 
-    def GET(self, object, startdate, enddate):
-        plt.figure()
+    def GET(self, obj, startdate, enddate):
+        # verify that object field is defined correctly
+        try:
+            loc, param = obj.split(":")
+        except ValueError as e:
+            raise cherrypy.HTTPError(400, "Object needs to be defined in site:value format")
+
+        # verify that startdate and enddate are correct
+        try:
+            startdate = dateutil.parser.parse(startdate)
+            enddate = dateutil.parser.parse(enddate)
+        except ValueError as e:
+            raise cherrypy.HTTPError(400, "End and/or start date defined incorrectly. Recommended format is: '0000-00-00T00:00:00.00+00:00' or any other ISO compatible presentation.")
+
+        # start gathering data to plot
+        objects = MAWSData.objects(
+            Q(timestamp__gte = startdate) &
+            Q(timestamp__lte = enddate) &
+            Q(site = loc))
+        if objects.__len__() == 0:
+            raise cherrypy.HTTPError(404, "With specified parameters no data could be found to be plotted.")
+        # plot the graf
         x_series = []
         y_series = []
-        for datapoint in MAWSData.objects(Q(timestamp__gte=dateutil.parser.parse(startdate)) & Q(timestamp__lte=dateutil.parser.parse(enddate))):
+        for datapoint in objects:
             x_series.append(datapoint["timestamp"].timestamp())
-            y_series.append(datapoint[object])
-        # plot the graf
-        plt.plot(x_series, y_series, label=object)
+            y_series.append(datapoint[param])
+        plt.figure()
+        plt.plot(x_series, y_series, label=obj)
         plt.legend(loc="upper left")
-        plt.xlabel("Date")
-        plt.ylabel("Value")
+        plt.xlabel("Relative timestamp")
+        plt.ylabel("Value of plotted object")
         plt.title("Plotted graph")
         # do some in-memory I/O trickery to get the image out
         buf = io.BytesIO()
@@ -68,4 +88,5 @@ class PLOTAPIRoot(object):
         # finally send correct header and pump the bitstream out
         cherrypy.response.headers["Content-Type"] = "image/png"
         return buf.read()
+
 # eof
