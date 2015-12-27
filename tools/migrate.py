@@ -43,9 +43,11 @@ def cli(ctx, mysql_host, mysql_port, mysql_user, mysql_pass, mysql_db, rest_url,
 def _send_rest_query(url, datapoints):
     logging.info("Uploading 'maws_insert' REST JSON")
     rest_query = {
-        "api_id": "mawsdata",
-        "api_version": 1,
-        "query_type": "maws_insert",
+        "header": {
+            "api_id": "mawsdata",
+            "api_version": 1,
+            "query_type": "maws_insert"
+        },
         "maws_insert": datapoints
     }
     logging.debug(json.dumps(rest_query, sort_keys=True, indent=4, separators=(',', ': ')))

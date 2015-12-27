@@ -6,19 +6,19 @@ import io
 from mongoengine import Q
 import matplotlib.pyplot as plt
 
-from lib.rest import rest_header_json, parse_incoming_json, verify_incoming_json
+from lib.rest import rest_response_json, verify_incoming_json
 from lib.db.documents import MAWSData
 
 class MAWSAPIRoot(object):
     exposed = True
 
     @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
     def PUT(self):
         # fetch json body, check JSON headers and
         #  throw exceptions that we do not catch if there is a problem
-        json_body = parse_incoming_json()
         query_payload = verify_incoming_json(
-            json_body=json_body,
+            json_body=cherrypy.request.json,
             accepted_version=1,
             accepted_query_type="maws_insert",
             accepted_payload_type=list)
@@ -38,11 +38,10 @@ class MAWSAPIRoot(object):
 
         # construct ack message and return it back to client
         result = {
-            'response_type': 'maws_insert',
             # define to success result how many items were added to database
             'maws_insert': {'success': success, 'failed': failed}
         }
-        return dict(rest_header_json(), **result)
+        return rest_response_json(version=1, payload=result)
 
 class PLOTAPIRoot(object):
     exposed = True

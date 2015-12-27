@@ -1,7 +1,9 @@
 {
-    "api_id": "mawsdata",
-    "api_version": 1,
-    "query_type": "maws_insert",
+    "header": {
+        "api_id": "mawsdata",
+        "api_version": 1,
+        "query_type": "maws_insert"
+    },
     "maws_insert": [
         {
             "site": "exampleLocation1",
