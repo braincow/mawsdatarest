@@ -53,7 +53,7 @@ def _send_rest_query(url, datapoints):
     logging.debug(json.dumps(rest_query, sort_keys=True, indent=4, separators=(',', ': ')))
     r = requests.put(url, data=json.dumps(rest_query), verify=False)
     result = r.json()["maws_insert"]
-    logging.info("Added: %i, Failed: %i" % (result["success"], result["failed"]))
+    logging.info("Added: %i, Skipped: %i" % (result["success"], result["skipped"]))
 
 @cli.command(short_help='Migrate MAWS data')
 @click.option('--mysql_table', required=True, help="MySQL source table name")

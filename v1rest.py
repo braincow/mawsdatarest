@@ -4,6 +4,8 @@ import pytz
 import io
 
 from mongoengine import Q
+from mongoengine.errors import ValidationError, NotUniqueError
+
 import matplotlib.pyplot as plt
 
 from lib.rest import rest_response_json, verify_incoming_json
@@ -23,23 +25,35 @@ class MAWSAPIRoot(object):
             accepted_query_type="maws_insert",
             accepted_payload_type=list)
 
-        failed = 0
+        skipped = 0
         success = 0
         for row in query_payload:
             try:
                 # timestamp needs to be a Python datetime object
                 row["timestamp"] = dateutil.parser.parse(row["timestamp"]).astimezone(pytz.utc)
-                # if the incoming json is in correct format just simply expanding the dictionary keys and values should fill out all necessary variables
-                #@TODO: sanitize so that expanded key=value pairs are _only_ those expected
+            except ValueError as e:
+                raise cherrypy.HTTPError(400, "Unable to parse timestamp. Recommended format is: '0000-00-00T00:00:00.00+00:00' or any other ISO compatible presentation.")
+
+            # sanitize so that expanded key=value pairs are _only_ those expected
+            accepted_keys = list(MAWSData._db_field_map.keys())
+            accepted_keys.remove('id')
+            for received_key in row.keys():
+                if received_key not in accepted_keys:
+                    raise cherrypy.HTTPError(400, "Syntax error. Unexpected key '%s'" % received_key)
+
+            # if the incoming json is in correct format just simply expanding the dictionary keys and values should fill out all necessary variables
+            try:
                 dbobj = MAWSData(**row).save()
                 success = success + 1
-            except Exception as e:
-                failed = failed + 1
+            except ValidationError as e:
+                raise cherrypy.HTTPError(400, str(e))
+            except NotUniqueError as e:
+                skipped = skipped + 1
 
         # construct ack message and return it back to client
         result = {
             # define to success result how many items were added to database
-            'maws_insert': {'success': success, 'failed': failed}
+            'maws_insert': {'success': success, 'skipped': skipped}
         }
         return rest_response_json(version=1, payload=result)
 
