@@ -12,7 +12,7 @@ from lib.db.documents import MAWSData
 class MAWSAPIRoot(object):
     exposed = True
 
-    @cherrypy.tools.auth_digest(realm='MAWSAPIRoot.PUT')
+    @cherrypy.tools.auth_basic(realm='MAWSAPIRoot.PUT')
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
     def PUT(self):

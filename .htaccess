@@ -1,2 +1,0 @@
-# pass through the authentication headers to our wsgi app (location of this file is most likely OpenShift Online Python cartridge specific)
-WSGIPassAuthorization On

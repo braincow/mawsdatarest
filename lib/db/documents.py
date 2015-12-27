@@ -22,4 +22,23 @@ class MAWSData(Document):
         ]
     }
 
+class MAWSAPIAuthRealm(Document):
+    name = StringField(required=True, unique=True)
+    meta = {
+        'indexes': [
+            'name'
+        ]
+    }
+
+class MAWSAPIUser(Document):
+    realms = ListField(ReferenceField(MAWSAPIAuthRealm, required=True))
+    username = StringField(required=True, unique=True)
+    password = StringField(required=True)
+    salt = StringField(required=True)
+    meta = {
+        'indexes': [
+            'username'
+        ]
+    }
+
 #eof
