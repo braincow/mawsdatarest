@@ -46,8 +46,8 @@ def cli(ctx, mysql_host, mysql_port, mysql_user, mysql_pass, mysql_db, rest_url,
             password = click.prompt("Password for REST access", hide_input=True)
     ctx.obj['auth'] = requests.auth.HTTPBasicAuth(username, password)
 
-def _send_rest_query(ctx, datapoints):
-    logging.info("Uploading 'maws_insert' REST JSON")
+def _send_rest_query(ctx, datapoints, total_done, total):
+    logging.debug("Uploading 'maws_insert' REST JSON")
     headers = {
         'Content-Type': 'application/json'
     }
@@ -65,7 +65,7 @@ def _send_rest_query(ctx, datapoints):
         logging.error(r.text)
         sys.exit(1)
     result = r.json()["maws_insert"]
-    logging.info("Added: %i, Skipped: %i" % (result["success"], result["skipped"]))
+    logging.info("Added: %i, Skipped: %i - Done: %i/%i" % (result["success"], result["skipped"], total_done, total))
 
 @cli.command(short_help='Migrate MAWS data')
 @click.option('--mysql_table', required=True, help="MySQL source table name")
@@ -89,6 +89,8 @@ def migrate(ctx, site_name, mysql_table, table_offset, table_amount, rest_amount
                 # use this instead of absolute total
                 logging.warning("Using %i as total since query set is LIMITed. Total in db is %i" % (table_offset + table_amount, total))
                 total = table_offset + table_amount
+            else:
+                total = total - table_offset
         else:
             logging.info("Total amount of rows to process is %i" % total)
             limit=""
@@ -119,12 +121,12 @@ def migrate(ctx, site_name, mysql_table, table_offset, table_amount, rest_amount
             logging.debug("t: %i/%i c: %i/%i" % (total_done, total, rest_current_limit, rest_amount))
             if rest_current_limit == rest_amount:
                 # send package, reset counter
-                _send_rest_query(ctx, rest_rows)
+                _send_rest_query(ctx, rest_rows, total_done, total)
                 rest_current_limit = 0
                 rest_rows = []
         if rest_rows.__len__() > 0:
             # empty the pool
-            _send_rest_query(ctx, rest_rows)
+            _send_rest_query(ctx, rest_rows, total_done, total)
 
 ### start client as main program
 def main():
