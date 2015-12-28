@@ -7,6 +7,7 @@ import pymysql.cursors
 import logging
 import pytz
 import json
+import sys
 
 @click.group()
 @click.option('--mysql_host', required=True, help="MySQL server to pull data off")
@@ -15,9 +16,11 @@ import json
 @click.option('--mysql_pass', required=False, help="MySQL user password used to connect to database")
 @click.option('--mysql_db', required=True, help="MySQL database used as import source")
 @click.option('--rest_url', required=True, help="REST API endpoint used as destination")
+@click.option('--username', required=False, help="Username used to authenticate REST calls.")
+@click.option('--password', required=False, help="Password used to authenticate REST calls. Will prompt from stdin if not provided when username is set.")
 @click.option('--debug/--no-debug', is_flag=True, default=False, help="Enable more verbose output from execution")
 @click.pass_context
-def cli(ctx, mysql_host, mysql_port, mysql_user, mysql_pass, mysql_db, rest_url, debug):
+def cli(ctx, mysql_host, mysql_port, mysql_user, mysql_pass, mysql_db, rest_url, username, password, debug):
     if debug:
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(module)s] [%(levelname)s] %(message)s')
     else:
@@ -39,9 +42,15 @@ def cli(ctx, mysql_host, mysql_port, mysql_user, mysql_pass, mysql_db, rest_url,
         charset='utf8mb4',
         cursorclass=pymysql.cursors.DictCursor)
     ctx.obj['rest_url'] = rest_url
+    if username and not password:
+            password = click.prompt("Password for REST access", hide_input=True)
+    ctx.obj['auth'] = requests.auth.HTTPBasicAuth(username, password)
 
-def _send_rest_query(url, datapoints):
+def _send_rest_query(ctx, datapoints):
     logging.info("Uploading 'maws_insert' REST JSON")
+    headers = {
+        'Content-Type': 'application/json'
+    }
     rest_query = {
         "header": {
             "api_id": "mawsdata",
@@ -51,7 +60,10 @@ def _send_rest_query(url, datapoints):
         "maws_insert": datapoints
     }
     logging.debug(json.dumps(rest_query, sort_keys=True, indent=4, separators=(',', ': ')))
-    r = requests.put(url, data=json.dumps(rest_query), verify=False)
+    r = requests.put(ctx.obj['rest_url'], headers=headers, data=json.dumps(rest_query), auth=ctx.obj["auth"], verify=False)
+    if r.status_code != 200:
+        logging.error(r.text)
+        sys.exit(1)
     result = r.json()["maws_insert"]
     logging.info("Added: %i, Skipped: %i" % (result["success"], result["skipped"]))
 
@@ -107,12 +119,12 @@ def migrate(ctx, site_name, mysql_table, table_offset, table_amount, rest_amount
             logging.debug("t: %i/%i c: %i/%i" % (total_done, total, rest_current_limit, rest_amount))
             if rest_current_limit == rest_amount:
                 # send package, reset counter
-                _send_rest_query(ctx.obj['rest_url'], rest_rows)
+                _send_rest_query(ctx, rest_rows)
                 rest_current_limit = 0
                 rest_rows = []
         if rest_rows.__len__() > 0:
             # empty the pool
-            _send_rest_query(ctx.obj['rest_url'], rest_rows)
+            _send_rest_query(ctx, rest_rows)
 
 ### start client as main program
 def main():
