@@ -108,7 +108,7 @@ class MAWSAPIRoot(object):
         loc = cherrypy.request.mawsdata.location
         datapoints = dict()
         for datapoint in objects:
-            datapoints[str(datapoint["timestamp"])] = datapoint[param]
+            datapoints[datapoint["timestamp"].replace(tzinfo=pytz.UTC).isoformat()] = datapoint[param]
         result = {
             # define result
             'maws_data': {
