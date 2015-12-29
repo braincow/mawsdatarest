@@ -9,6 +9,46 @@ from mongoengine.errors import ValidationError, NotUniqueError
 from lib.rest import rest_response_json, verify_incoming_json
 from lib.db.documents import MAWSData
 
+class MAWSDataRequest(object):
+    objects = None
+    location = None
+    parameter = None
+
+def _fetch_object_data(obj, startdate, enddate, max = 0):
+        # verify that object field is defined correctly
+        try:
+            loc, param = obj.split(":")
+        except ValueError as e:
+            raise cherrypy.HTTPError(400, "Object needs to be defined in site:value format")
+
+        # verify that startdate and enddate are correct
+        try:
+            startdate = dateutil.parser.parse(startdate)
+            enddate = dateutil.parser.parse(enddate)
+        except ValueError as e:
+            raise cherrypy.HTTPError(400, "End and/or start date defined incorrectly. Recommended format is: '0000-00-00T00:00:00.00+00:00' or any other ISO compatible presentation.")
+
+        # check basic error with dates being backwards
+        if startdate > enddate:
+            raise cherrypy.HTTPError(400, "Start date cannot be after end date.")
+
+        # if maximum limit is defined
+        if (enddate - startdate).days > max and max > 0:
+            raise cherrypy.HTTPError(400, "Trying to acquire too large dataset. Maximum amount of days is %i" % max)
+
+        # start gathering the data
+        objects = MAWSData.objects(
+            Q(timestamp__gte = startdate) &
+            Q(timestamp__lte = enddate) &
+            Q(site = loc))
+        if objects.__len__() == 0:
+            raise cherrypy.HTTPError(404, "With specified parameters no data could be found.")
+
+        cherrypy.request.mawsdata = MAWSDataRequest()
+        cherrypy.request.mawsdata.objects = objects
+        cherrypy.request.mawsdata.parameter = param
+        cherrypy.request.mawsdata.location = loc
+
 class MAWSAPIRoot(object):
     exposed = True
 
@@ -56,38 +96,40 @@ class MAWSAPIRoot(object):
         }
         return rest_response_json(version=1, payload=result)
 
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def GET(self, obj, startdate, enddate):
+        # parse parameters, fetch data
+        _fetch_object_data(
+            obj=obj, startdate=startdate, enddate=enddate,
+            max=cherrypy.config.get("plot.max.days"))
+        objects = cherrypy.request.mawsdata.objects
+        param = cherrypy.request.mawsdata.parameter
+        loc = cherrypy.request.mawsdata.location
+        datapoints = dict()
+        for datapoint in objects:
+            datapoints[str(datapoint["timestamp"])] = datapoint[param]
+        result = {
+            # define result
+            'maws_data': {
+                'location': loc,
+                'parameter': param,
+                'datapoints': datapoints
+            }
+        }
+        return rest_response_json(version=1, payload=result)
+
 class PLOTAPIRoot(object):
     exposed = True
 
     def GET(self, obj, startdate, enddate):
-        # verify that object field is defined correctly
-        try:
-            loc, param = obj.split(":")
-        except ValueError as e:
-            raise cherrypy.HTTPError(400, "Object needs to be defined in site:value format")
+        # parse parameters, fetch data
+        _fetch_object_data(
+            obj=obj, startdate=startdate, enddate=enddate,
+            max=cherrypy.config.get("plot.max.days"))
+        objects = cherrypy.request.mawsdata.objects
+        param = cherrypy.request.mawsdata.parameter
 
-        # verify that startdate and enddate are correct
-        try:
-            startdate = dateutil.parser.parse(startdate)
-            enddate = dateutil.parser.parse(enddate)
-        except ValueError as e:
-            raise cherrypy.HTTPError(400, "End and/or start date defined incorrectly. Recommended format is: '0000-00-00T00:00:00.00+00:00' or any other ISO compatible presentation.")
-
-        # check basic error with dates being backwards
-        if startdate > enddate:
-            raise cherrypy.HTTPError(400, "Start date cannot be after end date.")
-
-        # if user is trying to plot too much we crash (quite nastily actually, causing DoS. must be issue with wsgi + matplotlib)
-        if (enddate - startdate).days > cherrypy.config.get("plot.max.days"):
-            raise cherrypy.HTTPError(400, "Trying to plot too large dataset. Maximum amount of days is %i" % cherrypy.config.get("plot.max.days"))
-
-        # start gathering data to plot
-        objects = MAWSData.objects(
-            Q(timestamp__gte = startdate) &
-            Q(timestamp__lte = enddate) &
-            Q(site = loc))
-        if objects.__len__() == 0:
-            raise cherrypy.HTTPError(404, "With specified parameters no data could be found to be plotted.")
         # plot the graf
         x_series = []
         y_series = []
