@@ -37,7 +37,6 @@ class MAWSAPIUser(Document):
     realms = ListField(ReferenceField(MAWSAPIAuthRealm, required=True))
     username = StringField(required=True, unique=True)
     password = StringField(required=True)
-    salt = StringField(required=True)
     meta = {
         'indexes': [
             'username'

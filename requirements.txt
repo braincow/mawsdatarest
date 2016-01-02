@@ -3,3 +3,4 @@ mongoengine
 python-dateutil
 pytz
 matplotlib
+passlib
