@@ -6,9 +6,9 @@ from mongoengine import Q
 from lib.db.documents import MAWSData
 
 _MAWS_QUERY_REQUEST_PARAM_POSITION = {
-    'obj': 4,
-    'startdate': 5,
-    'enddate': 6
+    'obj': 3,
+    'startdate': 4,
+    'enddate': 5
 }
 
 class MAWSDataRequest(object):
@@ -22,8 +22,8 @@ class MAWSDataRequest(object):
         self.parameter = parameter
 
 def _maws_request_param(name):
-    # parse the request path_info into a list
-    path_info = cherrypy.request.path_info.split("/")
+    # prune and parse the requests path_info into a list without empty elements in it
+    path_info = cherrypy.request.path_info.strip("/").split("/")
     if name in cherrypy.request.params:
         # if the value is in standard HTTP parameter notation, pull it from there
         retval = cherrypy.request.params.get(name)
