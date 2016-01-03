@@ -78,7 +78,7 @@ class MAWSDataTool(cherrypy.Tool):
         objects = MAWSData.objects(
             Q(timestamp__gte = startdate) &
             Q(timestamp__lte = enddate) &
-            Q(site = loc))
+            Q(site = loc)).order_by("timestamp")
         if objects.__len__() == 0:
             raise cherrypy.HTTPError(404, "With specified parameters no data could be found.")
 
