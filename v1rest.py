@@ -2,6 +2,7 @@ import cherrypy
 import dateutil.parser
 import pytz
 import io
+import collections
 import matplotlib.pyplot as plt
 from mongoengine.errors import ValidationError, NotUniqueError
 
@@ -71,7 +72,7 @@ class MAWSAPIRoot(object):
             'maws_data': {
                 'location': loc,
                 'parameter': param,
-                'datapoints': datapoints
+                'datapoints': collections.OrderedDict(sorted(datapoints.items()))
             }
         }
         return rest_response_json(version=1, payload=result)
