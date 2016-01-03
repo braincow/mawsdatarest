@@ -9,6 +9,10 @@ from mongoengine import connect
 from lib.cherry.https import ForceHTTPSTool
 cherrypy.tools.forcehttps = ForceHTTPSTool()
 
+# tool used to fetch MAWS data objects from database and put them part as cherrypy.request
+from lib.cherry.mawsdata import MAWSDataTool
+cherrypy.tools.fetch_mawsdata = MAWSDataTool()
+
 # approot object should be the root page of our application
 from v1rest import MAWSAPIRoot, PLOTAPIRoot
 class v1APIRoot(object):
