@@ -22,6 +22,7 @@ class MAWSDataRequest(object):
         self.parameter = parameter
 
 def _maws_request_param(name):
+    # parse the request path_info into a list
     path_info = cherrypy.request.path_info.split("/")
     if name in cherrypy.request.params:
         # if the value is in standard HTTP parameter notation, pull it from there
@@ -49,8 +50,8 @@ class MAWSDataTool(cherrypy.Tool):
 
         # pull required arguments from request
         obj = _maws_request_param("obj")
-        enddate = _maws_request_param("enddate")
         startdate = _maws_request_param("startdate")
+        enddate = _maws_request_param("enddate")
 
         # verify that object field is defined correctly
         try:
