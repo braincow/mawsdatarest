@@ -70,9 +70,9 @@ class MAWSAPIRoot(object):
         result = {
             # define result
             'maws_data': {
-                'location': loc,
-                'parameter': param,
-                'datapoints': collections.OrderedDict(sorted(datapoints.items()))
+                loc: {
+                    param: collections.OrderedDict(sorted(datapoints.items()))
+                }
             }
         }
         return rest_response_json(version=1, payload=result)
