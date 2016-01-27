@@ -89,11 +89,12 @@ class PLOTAPIRoot(object):
         x_series = []
         y_series = []
         for datapoint in objects:
-            x_series.append(datapoint["timestamp"].timestamp())
+            x_series.append(datapoint["timestamp"])
             y_series.append(datapoint[param])
         plt.figure()
         plt.plot(x_series, y_series)
-        plt.xlabel("Relative timestamp (in seconds)")
+        plt.gcf().autofmt_xdate()
+        plt.xlabel("Time")
         plt.ylabel(obj)
         plt.title("Visualized time series for value")
         # do some in-memory I/O trickery to get the image out
