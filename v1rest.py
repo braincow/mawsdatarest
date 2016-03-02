@@ -62,19 +62,21 @@ class MAWSAPIRoot(object):
     def GET(self, obj, startdate, enddate):
         # parse parameters, fetch data
         objects = cherrypy.request.mawsdata.objects
-        param = cherrypy.request.mawsdata.parameter
+        params = cherrypy.request.mawsdata.parameter.split(",")
         loc = cherrypy.request.mawsdata.location
         datapoints = dict()
-        for datapoint in objects:
-            datapoints[datapoint["timestamp"].replace(tzinfo=pytz.UTC).isoformat()] = datapoint[param]
+        for param in params:
+            datapoints[param] = dict()
+            for datapoint in objects:
+                datapoints[param][datapoint["timestamp"].replace(tzinfo=pytz.UTC).isoformat()] = datapoint[param]
         result = {
             # define result
             'maws_data': {
-                loc: {
-                    param: collections.OrderedDict(sorted(datapoints.items()))
-                }
+                loc: {}
             }
         }
+        for param in params:
+            result['maws_data'][loc][param] = collections.OrderedDict(sorted(datapoints[param].items()))
         return rest_response_json(version=1, payload=result)
 
 class PLOTAPIRoot(object):
