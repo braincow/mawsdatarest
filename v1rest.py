@@ -3,6 +3,7 @@ import dateutil.parser
 import pytz
 import io
 import collections
+import string
 import matplotlib.pyplot as plt
 from mongoengine.errors import ValidationError, NotUniqueError
 
@@ -78,6 +79,37 @@ class MAWSAPIRoot(object):
             }
         }
         return rest_response_json(version=1, payload=result)
+
+class CSVAPIRoot(object):
+    exposed = True
+
+    @cherrypy.tools.fetch_mawsdata()
+    def GET(self, obj, startdate, enddate):
+        # parse parameters, fetch data
+        objects = cherrypy.request.mawsdata.objects
+        params = cherrypy.request.mawsdata.parameter.split(",")
+        loc = cherrypy.request.mawsdata.location
+
+        cherrypy.response.headers['Content-Type'] = 'text/csv'
+        cherrypy.response.headers['Content-Disposition'] = 'attachment; filename=mawsdata_export.csv'
+
+        def content():
+            # write the header row
+            yield "%s;%s\n" % (loc, string.join(params, ';'))
+
+            try:
+                for datapoint in objects:
+                    row = None
+                    for param in params:
+                        timestamp = datapoint["timestamp"].replace(tzinfo=pytz.UTC).isoformat()
+                        if not row:
+                            row = timestamp
+                        row = "%s;%s" % (row, datapoint[param])
+                    yield "%s\n" % row
+            except Exception as e:
+                yield "\n; Error occured: %s %s ;\n" % (type(e), e)
+
+        return content()
 
 class PLOTAPIRoot(object):
     exposed = True

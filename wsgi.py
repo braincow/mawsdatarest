@@ -14,11 +14,12 @@ from lib.cherry.mawsdata import MAWSDataTool
 cherrypy.tools.fetch_mawsdata = MAWSDataTool()
 
 # approot object should be the root page of our application
-from v1rest import MAWSAPIRoot, PLOTAPIRoot
+import v1rest
 class v1APIRoot(object):
     exposed = True
-    maws = MAWSAPIRoot()
-    plot = PLOTAPIRoot()
+    maws = v1rest.MAWSAPIRoot()
+    plot = v1rest.PLOTAPIRoot()
+    csv = v1rest.CSVAPIRoot()
 
 class APIRoot(object):
     exposed = True
