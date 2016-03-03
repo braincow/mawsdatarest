@@ -44,7 +44,7 @@ class MAWSDataTool(cherrypy.Tool):
     def tool_hook(self, limit_from_conf = None):
         # do we need to configure how much of data can be accessed?
         if limit_from_conf:
-            max = cherrypy.config.get("plot.max_days")
+            max = cherrypy.config.get(limit_from_conf)
         else:
             max = 0
 
