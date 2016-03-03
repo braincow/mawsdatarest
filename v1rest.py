@@ -90,26 +90,23 @@ class CSVAPIRoot(object):
         params = cherrypy.request.mawsdata.parameter.split(",")
         loc = cherrypy.request.mawsdata.location
 
+        content = "%s;%s\n" % (loc, string.join(params, ';'))
+        try:
+            for datapoint in objects:
+                row = None
+                for param in params:
+                    timestamp = datapoint["timestamp"].replace(tzinfo=pytz.UTC).isoformat()
+                    if not row:
+                        row = timestamp
+                    row = "%s;%s" % (row, datapoint[param])
+                content = "%s%s\n" % (content, row)
+        except KeyError as e:
+            raise cherrypy.HTTPError(400, "Syntax error. Unexpected key %s" % e)
+
         cherrypy.response.headers['Content-Type'] = 'text/csv'
         cherrypy.response.headers['Content-Disposition'] = 'attachment; filename=mawsdata_export.csv'
 
-        def content():
-            # write the header row
-            yield "%s;%s\n" % (loc, string.join(params, ';'))
-
-            try:
-                for datapoint in objects:
-                    row = None
-                    for param in params:
-                        timestamp = datapoint["timestamp"].replace(tzinfo=pytz.UTC).isoformat()
-                        if not row:
-                            row = timestamp
-                        row = "%s;%s" % (row, datapoint[param])
-                    yield "%s\n" % row
-            except Exception as e:
-                yield "\n; Error occured: %s %s ;\n" % (type(e), e)
-
-        return content()
+        return content
 
 class PLOTAPIRoot(object):
     exposed = True
