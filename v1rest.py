@@ -66,17 +66,17 @@ class MAWSAPIRoot(object):
         loc = cherrypy.request.mawsdata.location
         datapoints = dict()
         for param in params:
-            datapoints[param] = dict()
             for datapoint in objects:
-                datapoints[param][datapoint["timestamp"].replace(tzinfo=pytz.UTC).isoformat()] = datapoint[param]
+                timestamp = datapoint["timestamp"].replace(tzinfo=pytz.UTC).isoformat()
+                if timestamp not in datapoints.keys():
+                    datapoints[timestamp] = dict()
+                datapoints[timestamp][param] = datapoint[param]
         result = {
             # define result
             'maws_data': {
-                loc: {}
+                loc: collections.OrderedDict(sorted(datapoints.items()))
             }
         }
-        for param in params:
-            result['maws_data'][loc][param] = collections.OrderedDict(sorted(datapoints[param].items()))
         return rest_response_json(version=1, payload=result)
 
 class PLOTAPIRoot(object):
