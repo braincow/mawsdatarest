@@ -3,7 +3,6 @@ import dateutil.parser
 import pytz
 import io
 import collections
-import string
 import matplotlib.pyplot as plt
 from mongoengine.errors import ValidationError, NotUniqueError
 
@@ -90,7 +89,7 @@ class CSVAPIRoot(object):
         params = cherrypy.request.mawsdata.parameter.split(",")
         loc = cherrypy.request.mawsdata.location
 
-        content = "%s;%s\n" % (loc, string.join(params, ';'))
+        content = "%s;%s\n" % (loc, ";".join(params))
         try:
             for datapoint in objects:
                 row = None
